@@ -3,7 +3,6 @@ import { StatusBar, FlatList } from 'react-native';
 import { useTheme } from 'styled-components';
 import { useNavigation } from '@react-navigation/core';
 import { AntDesign } from '@expo/vector-icons';
-import { parseISO, format } from 'date-fns';
 
 import { BackButton } from '../../components/BackButton';
 
@@ -12,7 +11,7 @@ import { CarDTO } from '../../dtos/CarDTO';
 import { api } from '../../services/api';
 
 import * as S from './styles';
-import { Load } from '../../components/Load';
+import { LoadAnimation } from '../../components/LoadAnimation';
 
 interface CarProps {
     id: string;
@@ -38,7 +37,6 @@ export function MyCars() {
         async function fetchCars() {
             try {
                 const response = await api.get('/schedules_byuser?user_id=1');
-                console.log(response.data)
                 setCars(response.data);
             } catch (error) {
                 console.log(error);
@@ -71,7 +69,7 @@ export function MyCars() {
                 </S.SubTitle>
             </S.Header>
 
-            {loading ? <Load /> : (
+            {loading ? <LoadAnimation /> : (
                 <S.Content>
                     <S.Appointments>
                         <S.AppointmentsTitle>Agendamentos feitos</S.AppointmentsTitle>
@@ -80,7 +78,7 @@ export function MyCars() {
 
                     <FlatList
                         data={cars}
-                        keyExtractor={item => item.id}
+                        keyExtractor={item => String(item.id)}
                         showsVerticalScrollIndicator={false}
                         renderItem={({ item }) => (
                             <S.CarWrapper>

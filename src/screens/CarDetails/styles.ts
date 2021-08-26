@@ -17,7 +17,7 @@ export const Header = styled.View`
 `;
 
 export const CarImages = styled.View`
-  margin-top: ${getStatusBarHeight() + 82}px;
+  margin-top: ${getStatusBarHeight() + 32}px;
 `;
 
 export const Details = styled.View`
@@ -26,7 +26,6 @@ export const Details = styled.View`
   align-items: center;
   justify-content: space-between;
   margin-top: 38px;
-  padding: 0 20px;
 `;
 
 export const Description = styled.View``;
@@ -66,7 +65,6 @@ export const About = styled.Text`
   text-align: justify;
   margin-top: 23px;
   line-height:${RFValue(25)}px;
-  padding: 0 20px;
 `;
 
 export const Accessories = styled.View`
@@ -76,7 +74,6 @@ export const Accessories = styled.View`
   align-items: center;
   justify-content: space-between;
   margin-top: 16px;
-  padding: 0 20px;
 `;
 
 export const Footer = styled.View`

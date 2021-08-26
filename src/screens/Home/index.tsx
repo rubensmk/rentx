@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { StatusBar } from 'react-native'
+import { StatusBar, StyleSheet, BackHandler } from 'react-native'
 import * as S from './styles'
 
 import Logo from '../../assets/logo.svg'
@@ -9,15 +9,44 @@ import { Ionicons } from '@expo/vector-icons'
 import { NavigationProp, useNavigation } from '@react-navigation/native'
 import { api } from '../../services/api'
 import { CarDTO } from '../../dtos/CarDTO'
-import { Load } from '../../components/Load'
+import { LoadAnimation } from '../../components/LoadAnimation'
 import { useTheme } from 'styled-components'
+
+import Animated, { useSharedValue, useAnimatedStyle, useAnimatedGestureHandler, withSpring } from 'react-native-reanimated';
+import { RectButton, PanGestureHandler } from 'react-native-gesture-handler'
+
+const ButtonAnimated = Animated.createAnimatedComponent(RectButton);
 
 export function Home() {
     const navigation: NavigationProp<any> = useNavigation();
-    const [cars, setCars] = useState<CarDTO[]>([]);
-    const [loading, setLoading] = useState(false);
     const theme = useTheme();
 
+    const [cars, setCars] = useState<CarDTO[]>([]);
+    const [loading, setLoading] = useState(false);
+
+    const positionY = useSharedValue(0);
+    const positionX = useSharedValue(0);
+
+    const myCarsButtonStyle = useAnimatedStyle(() => {
+        return {
+            transform: [{ translateX: positionX.value }, { translateY: positionY.value }]
+        }
+    });
+
+    const onGestureEvent = useAnimatedGestureHandler({
+        onStart(_, ctx: any) {
+            ctx.positionX = positionX.value;
+            ctx.positionY = positionX.value;
+        },
+        onActive(event, ctx: any) {
+            positionX.value = ctx.positionX + event.translationX;
+            positionY.value = ctx.positionY + event.translationY;
+        },
+        onEnd() {
+            positionX.value = withSpring(0);
+            positionY.value = withSpring(0);
+        }
+    })
 
     function handleCarDetails(car: CarDTO) {
         navigation.navigate('CarDetails', { car })
@@ -41,6 +70,12 @@ export function Home() {
             }
         }
         fetchCars();
+    }, []);
+
+    useEffect(() => {
+        BackHandler.addEventListener('hardwareBackPress', () => {
+            return true;
+        })
     }, [])
     return (
         <S.Container>
@@ -49,24 +84,40 @@ export function Home() {
             <S.Header>
                 <S.HeaderContent>
                     <Logo width={RFValue(108)} height={RFValue(12)} />
-                    <S.TotalCars>
-                        Total de 12 carros
-                    </S.TotalCars>
+                    {!loading && (
+                        <S.TotalCars>
+                            Total de {cars.length} carros
+                        </S.TotalCars>
+                    )}
                 </S.HeaderContent>
             </S.Header>
 
-            {loading ? <Load /> : (
+            {loading ? <LoadAnimation /> :
                 <S.CarList
                     data={cars}
                     keyExtractor={item => String(item.id)}
                     renderItem={({ item }) => <Car data={item} onPress={() => handleCarDetails(item)} />}
                 />
-            )}
+            }
 
-            <S.MyCarsButton onPress={handleOpenMyCars}>
-                <Ionicons name="ios-car-sport" size={32} color={theme.colors.background_secondary} />
-            </S.MyCarsButton>
+            <PanGestureHandler onGestureEvent={onGestureEvent}>
+                <Animated.View style={[myCarsButtonStyle, { position: 'absolute', bottom: 13, right: 22 }]}>
+                    <ButtonAnimated onPress={handleOpenMyCars} style={[styles.button, { backgroundColor: theme.colors.main }]}>
+                        <Ionicons name="ios-car-sport" size={32} color={theme.colors.background_secondary} />
+                    </ButtonAnimated>
+                </Animated.View>
+            </PanGestureHandler>
 
         </S.Container>
     )
 }
+
+const styles = StyleSheet.create({
+    button: {
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        justifyContent: 'center',
+        alignItems: 'center'
+    }
+});
