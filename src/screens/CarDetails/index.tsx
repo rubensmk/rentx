@@ -91,8 +91,8 @@ export function CarDetails() {
                         <S.Name>{car.name}</S.Name>
                     </S.Description>
                     <S.Rent>
-                        <S.Period>{car.rent.period}</S.Period>
-                        <S.Price>R$ {car.rent.price}</S.Price>
+                        <S.Period>{car.period}</S.Period>
+                        <S.Price>R$ {car.price}</S.Price>
                     </S.Rent>
                 </S.Details>
 

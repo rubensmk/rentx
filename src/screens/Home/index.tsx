@@ -72,11 +72,6 @@ export function Home() {
         fetchCars();
     }, []);
 
-    useEffect(() => {
-        BackHandler.addEventListener('hardwareBackPress', () => {
-            return true;
-        })
-    }, [])
     return (
         <S.Container>
             <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
@@ -100,13 +95,13 @@ export function Home() {
                 />
             }
 
-            <PanGestureHandler onGestureEvent={onGestureEvent}>
+            {/* <PanGestureHandler onGestureEvent={onGestureEvent}>
                 <Animated.View style={[myCarsButtonStyle, { position: 'absolute', bottom: 13, right: 22 }]}>
                     <ButtonAnimated onPress={handleOpenMyCars} style={[styles.button, { backgroundColor: theme.colors.main }]}>
                         <Ionicons name="ios-car-sport" size={32} color={theme.colors.background_secondary} />
                     </ButtonAnimated>
                 </Animated.View>
-            </PanGestureHandler>
+            </PanGestureHandler> */}
 
         </S.Container>
     )
