@@ -70,7 +70,8 @@ export function SignUpSecondStep() {
                     message: `Agora é só fazer login\ne aproveitar.`
                 });
             })
-            .catch(() => {
+            .catch((err) => {
+                console.log(err)
                 Alert.alert('Opa', 'Não foi possível cadastrar');
             });
     }

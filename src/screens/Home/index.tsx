@@ -1,16 +1,20 @@
 import React, { useEffect, useState } from 'react'
-import { StatusBar, StyleSheet, BackHandler } from 'react-native'
+import { StatusBar, StyleSheet } from 'react-native'
 import * as S from './styles'
 
 import Logo from '../../assets/logo.svg'
 import { RFValue } from 'react-native-responsive-fontsize'
 import { Car } from '../../components/Car'
+import { Car as ModelCar } from '../../database/model/Car'
 import { Ionicons } from '@expo/vector-icons'
 import { NavigationProp, useNavigation } from '@react-navigation/native'
 import { api } from '../../services/api'
 import { CarDTO } from '../../dtos/CarDTO'
 import { LoadAnimation } from '../../components/LoadAnimation'
 import { useTheme } from 'styled-components'
+import { useNetInfo } from '@react-native-community/netinfo'
+import { synchronize } from '@nozbe/watermelondb/sync'
+import { database } from '../../database'
 
 import Animated, { useSharedValue, useAnimatedStyle, useAnimatedGestureHandler, withSpring } from 'react-native-reanimated';
 import { RectButton, PanGestureHandler } from 'react-native-gesture-handler'
@@ -20,8 +24,9 @@ const ButtonAnimated = Animated.createAnimatedComponent(RectButton);
 export function Home() {
     const navigation: NavigationProp<any> = useNavigation();
     const theme = useTheme();
+    const netInfo = useNetInfo();
 
-    const [cars, setCars] = useState<CarDTO[]>([]);
+    const [cars, setCars] = useState<ModelCar[]>([]);
     const [loading, setLoading] = useState(false);
 
     const positionY = useSharedValue(0);
@@ -52,26 +57,56 @@ export function Home() {
         navigation.navigate('CarDetails', { car })
     }
 
-    function handleOpenMyCars() {
-        navigation.navigate('MyCars')
+    async function offlineSyncronize() {
+        await synchronize({
+            database,
+            pullChanges: async ({ lastPulledAt }) => {
+                const response = await api.get(`cars/sync/pull?lastPulledVersion=${lastPulledAt || 0}`);
+                const { changes, latestVersion } = response.data;
+                console.log(changes);
+
+                return { changes, timestamp: latestVersion };
+            },
+            pushChanges: async ({ changes }) => {
+                const user = changes.users;
+                await api.post('/users/sync', user);
+            }
+        })
     }
+    // function handleOpenMyCars() {
+    //     navigation.navigate('MyCars')
+    // }
 
     useEffect(() => {
+        let isMounted = true;
         async function fetchCars() {
 
             try {
-                const response = await api.get('/cars');
-                setCars(response.data);
-
+                const carCollection = database.get<ModelCar>('cars');
+                const cars = await carCollection.query().fetch();
+                if (isMounted) {
+                    setCars(cars);
+                }
             } catch (error) {
-                console.log(error);
+                throw new Error(error);
             } finally {
-                setLoading(false);
+                if (isMounted) {
+                    setLoading(false);
+                }
             }
         }
         fetchCars();
+
+        return () => {
+            isMounted = false;
+        };
     }, []);
 
+    useEffect(() => {
+        if (netInfo.isConnected === true) {
+            offlineSyncronize();
+        }
+    }, [netInfo.isConnected])
     return (
         <S.Container>
             <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
@@ -107,12 +142,3 @@ export function Home() {
     )
 }
 
-const styles = StyleSheet.create({
-    button: {
-        width: 60,
-        height: 60,
-        borderRadius: 30,
-        justifyContent: 'center',
-        alignItems: 'center'
-    }
-});

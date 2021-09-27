@@ -17,7 +17,7 @@ export const Header = styled.View`
 `;
 
 export const CarImages = styled.View`
-  margin-top: ${getStatusBarHeight() + 66}px;
+  margin-top: ${getStatusBarHeight() + 18}px;
 `;
 
 export const Content = styled.ScrollView.attrs({
@@ -33,8 +33,6 @@ export const Details = styled.View`
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  margin-top: 20px;
-  padding:0 20px;
 `;
 
 export const Description = styled.View`
@@ -77,8 +75,8 @@ export const Accessories = styled.View`
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  margin-top: 20px;
-  padding:0 20px;
+  margin-top: 5px;
+  padding:0 10px;
 `;
 
 export const Footer = styled.View`
@@ -92,10 +90,9 @@ export const RentalPeriod = styled.View`
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  margin-top: 20px;
   border-bottom-width: 1px;
   border-bottom-color: ${({ theme }) => theme.colors.line};
-  padding:10px 20px 40px 20px;
+  padding:10px 20px 10px 20px;
 `;
 
 export const CalendarIcon = styled.View`

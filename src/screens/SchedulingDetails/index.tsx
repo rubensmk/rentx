@@ -15,6 +15,7 @@ import { getAccessoryIcon } from '../../utils/getAccessoryIcon';
 import { format } from 'date-fns';
 import { getPlatformDate } from '../../utils/getPlataformDate';
 import { api } from '../../services/api';
+import { useNetInfo } from '@react-native-community/netinfo';
 
 interface Params {
     car: CarDTO,
@@ -30,34 +31,25 @@ interface RentalPeriod {
 export function SchedulingDetails() {
     const [rentalPeriod, setRentalPeriod] = useState<RentalPeriod>({} as RentalPeriod);
     const [loading, setLoading] = useState(false);
+    const [carUpdated, setCarUpdated] = useState<CarDTO>({} as CarDTO);
 
     const navigation: NavigationProp<any> = useNavigation();
     const theme = useTheme();
     const route = useRoute();
+    const netInfo = useNetInfo();
     const { car, dates } = route.params as Params;
 
-    const rentTotal = Number(dates.length * car.rent.price);
+    const rentTotal = Number(dates.length * car.price);
 
     async function handleConfirmation() {
         setLoading(true);
 
-        const schedulesByCar = await api.get(`/schedules_bycars/${car.id}`);
-
-        const unavailable_dates = [
-            ...schedulesByCar.data.unavailable_dates,
-            ...dates
-        ];
-
-        await api.post(`/schedules_byuser`, {
+        await api.post(`/rentals`, {
             user_id: 1,
-            car,
-            startDate: format(getPlatformDate(new Date(dates[0])), 'dd/MM/yyyy'),
-            endDate: format(getPlatformDate(new Date(dates[dates.length - 1])), 'dd/MM/yyyy')
-        });
-
-        await api.put(`schedules_bycars/${car.id}`, {
-            id: car.id,
-            unavailable_dates
+            car_id: car.id,
+            start_date: new Date(dates[0]),
+            end_date: new Date(dates[dates.length - 1]),
+            total: rentTotal
         }).then(() => {
             navigation.navigate('Confirmation', {
                 nextScreenRoute: 'Home',
@@ -79,6 +71,15 @@ export function SchedulingDetails() {
         });
     }, []);
 
+    useEffect(() => {
+        async function fetchCarUpdate() {
+            const response = await api.get(`/cars/${car.id}`);
+            setCarUpdated(response.data);
+        }
+        if (netInfo.isConnected === true) {
+            fetchCarUpdate();
+        }
+    }, [netInfo.isConnected])
 
     return (
         <S.Container>
@@ -93,7 +94,7 @@ export function SchedulingDetails() {
             </S.Header>
 
             <S.CarImages>
-                <ImageSlider imagesUrl={car.photos} />
+                <ImageSlider imagesUrl={!!carUpdated.photos ? carUpdated.photos : [{ id: car.thumbnail, photo: car.thumbnail }]} />
             </S.CarImages>
 
             <S.Details>
@@ -102,20 +103,23 @@ export function SchedulingDetails() {
                     <S.Name>{car.name}</S.Name>
                 </S.Description>
                 <S.Rent>
-                    <S.Period>{car.rent.period}</S.Period>
-                    <S.Price>R${car.rent.price}</S.Price>
+                    <S.Period>{car.period}</S.Period>
+                    <S.Price>R${car.price}</S.Price>
                 </S.Rent>
             </S.Details>
 
-            <S.Accessories>
-                {car.accessories.map(accessory => (
-                    <Accessory
-                        key={accessory.type}
-                        name={accessory.name}
-                        icon={getAccessoryIcon(accessory.type)}
-                    />
-                ))}
-            </S.Accessories>
+            {carUpdated.accessories &&
+                <S.Accessories>
+                    {carUpdated.accessories.map(accessory => (
+                        <Accessory
+                            key={accessory.type}
+                            name={accessory.name}
+                            icon={getAccessoryIcon(accessory.type)}
+                        />
+                    ))}
+                </S.Accessories>
+            }
+
 
             <S.RentalPeriod>
                 <S.CalendarIcon>
@@ -146,7 +150,7 @@ export function SchedulingDetails() {
             <S.RentalPrice>
                 <S.RentalPriceLabel>TOTAL</S.RentalPriceLabel>
                 <S.RentalPriceDetails>
-                    <S.RentalPriceQuota>{`R$ ${car.rent.price} x ${dates.length} diárias.`}</S.RentalPriceQuota>
+                    <S.RentalPriceQuota>{`R$ ${car.price} x ${dates.length} diárias.`}</S.RentalPriceQuota>
                     <S.RentalPriceTotal>R$ {rentTotal}</S.RentalPriceTotal>
                 </S.RentalPriceDetails>
             </S.RentalPrice>

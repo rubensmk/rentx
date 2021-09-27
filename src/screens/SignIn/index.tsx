@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import {
     StatusBar,
     KeyboardAvoidingView,
@@ -49,6 +49,8 @@ export function SignIn() {
     function handleNewAccount() {
         navigation.navigate('SignUpFirstStep');
     }
+
+
     return (
         <KeyboardAvoidingView behavior="position" enabled>
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
